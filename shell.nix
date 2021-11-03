@@ -14,6 +14,6 @@ pkgs.mkShell {
     pkgs.consul
     pkgs.nomad
     pkgs.vault
-    pkgs.vagrantS
+    pkgs.vagrant
   ];
 }

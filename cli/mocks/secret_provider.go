@@ -2,7 +2,7 @@ package mocks
 
 type MockSecretProvider struct {
 	FnDelete   func(key string) error
-	FnGenerate func(key string) error
+	FnGenerate func(key string, length int, nums int, symbols int) error
 	FnGet      func(key string) (string, error)
 	FnSet      func(key string, value string) error
 }
@@ -11,8 +11,8 @@ func (m *MockSecretProvider) Delete(key string) error {
 	return m.FnDelete(key)
 }
 
-func (m *MockSecretProvider) Generate(key string) error {
-	return m.FnGenerate(key)
+func (m *MockSecretProvider) Generate(key string, length int, nums int, symbols int) error {
+	return m.FnGenerate(key, length, nums, symbols)
 }
 
 func (m *MockSecretProvider) Get(key string) (string, error) {

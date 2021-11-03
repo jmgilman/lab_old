@@ -87,7 +87,7 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	err := provider.Generate(expected_key)
+	err := provider.Generate(expected_key, 0, 0, 0)
 	is.NoErr(err)
 	is.Equal(got_key, expected_key)
 	is.Equal(got_value, expected_value)
@@ -104,7 +104,7 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	err = provider.Generate(expected_key)
+	err = provider.Generate(expected_key, 0, 0, 0)
 	is.Equal(err.Error(), "failed generating random password")
 
 	// With SSM error
@@ -119,7 +119,7 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 
-	err = provider.Generate(expected_key)
+	err = provider.Generate(expected_key, 0, 0, 0)
 	is.Equal(err.Error(), "error querying AWS: failed")
 }
 
@@ -196,7 +196,7 @@ func TestPut(t *testing.T) {
 		},
 	}
 
-	err = provider.Generate(expected_key)
+	err = provider.Set(expected_key, expected_value)
 	is.Equal(err.Error(), "error querying AWS: failed")
 }
 

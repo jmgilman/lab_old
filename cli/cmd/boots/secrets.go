@@ -34,6 +34,28 @@ func secrets() *cli.Command {
 	}
 	flags = append(flags, aws.Flags()...)
 
+	gen_flags := []cli.Flag{
+		&cli.IntFlag{
+			Name:    "length",
+			Aliases: []string{"l"},
+			Value:   16,
+			Usage:   "length of the generated password",
+		},
+		&cli.IntFlag{
+			Name:    "numbers",
+			Aliases: []string{"n"},
+			Value:   1,
+			Usage:   "The quantity of numbers to include in the password",
+		},
+		&cli.IntFlag{
+			Name:    "symbols",
+			Aliases: []string{"s"},
+			Value:   1,
+			Usage:   "The quantity of symbols to include in the password",
+		},
+	}
+	gen_flags = append(flags, gen_flags...)
+
 	// Setup subcommands
 	delete := &cli.Command{
 		Name:      "delete",
@@ -48,7 +70,7 @@ func secrets() *cli.Command {
 		Name:      "generate",
 		Usage:     "Generates a new random secret",
 		ArgsUsage: "<KEY>",
-		Flags:     flags,
+		Flags:     gen_flags,
 		Action: func(c *cli.Context) error {
 			return secretsCommand(c, cmdGenerate)
 		},
@@ -130,7 +152,7 @@ func generate(c *cli.Context, provider gcli.SecretProvider) error {
 		return gcli.Exit("must provide a key")
 	}
 
-	err := provider.Generate(c.Args().First())
+	err := provider.Generate(c.Args().First(), c.Int("length"), c.Int("numbers"), c.Int("symbols"))
 	if err != nil {
 		return gcli.Exit(err.Error())
 	}

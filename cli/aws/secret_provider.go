@@ -53,8 +53,8 @@ func (s *SecretProvider) Delete(key string) error {
 
 // Generate generates a new random secret value with the given key. Overwrites any
 // previous value that existed with the key
-func (s *SecretProvider) Generate(key string) error {
-	res, err := s.generator(16, 4, 0, false, false)
+func (s *SecretProvider) Generate(key string, length int, nums int, symbols int) error {
+	res, err := s.generator(length, nums, symbols, false, false)
 	if err != nil {
 		return fmt.Errorf("failed generating random password")
 	}
@@ -158,9 +158,7 @@ func NewSecretProviderConfig(c *cli.Context) (SecretProviderConfig, error) {
 	config := aws.NewConfig()
 
 	// Check if static credentials were supplied
-	fmt.Println("Here1")
 	if c.IsSet(flag_access_key) || c.IsSet(flag_secret_key) {
-		fmt.Println("Here2")
 		if !(c.IsSet(flag_access_key) && c.IsSet(flag_secret_key)) {
 			return SecretProviderConfig{}, fmt.Errorf("must supply both access and secret keys")
 		}
