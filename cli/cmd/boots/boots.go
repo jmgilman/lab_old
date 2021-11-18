@@ -8,7 +8,9 @@ import (
 )
 
 func main() {
+	image := image()
 	secrets := secrets()
+
 	cli.VersionFlag = &cli.BoolFlag{
 		Name:    "version",
 		Aliases: []string{"V"},
@@ -19,7 +21,7 @@ func main() {
 		Version:  "v0.1.1",
 		HelpName: "boots",
 		Usage:    "A CLI tool for bootstrapping the GLab stack",
-		Commands: []*cli.Command{secrets},
+		Commands: []*cli.Command{image, secrets},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:    "verbose",

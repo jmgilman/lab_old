@@ -8,23 +8,33 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-type SecretsCommand int
-
-const (
-	cmdDelete SecretsCommand = iota
-	cmdGenerate
-	cmdGet
-	cmdSet
-)
-
 const (
 	flag_backend = "backend"
 )
 
-var mockProvider gcli.SecretProvider
+type secretsConfig struct {
+	provider gcli.SecretProvider
+}
+
+func newSecretsConfig(c *cli.Context) (*secretsConfig, error) {
+	sc := &secretsConfig{}
+	switch c.String(flag_backend) {
+	case "aws":
+		pc, err := aws.NewSecretProviderConfig(c)
+		if err != nil {
+			return nil, err
+		}
+
+		p := aws.NewSecretProvider(pc)
+		sc.provider = &p
+	default:
+		return nil, fmt.Errorf("invalid backend: %s", c.String(flag_backend))
+	}
+
+	return sc, nil
+}
 
 func secrets() *cli.Command {
-	// Register flags
 	flags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "backend",
@@ -56,14 +66,17 @@ func secrets() *cli.Command {
 	}
 	gen_flags = append(flags, gen_flags...)
 
-	// Setup subcommands
 	delete := &cli.Command{
 		Name:      "delete",
 		Usage:     "Deletes a secret",
 		ArgsUsage: "<KEY>",
 		Flags:     flags,
 		Action: func(c *cli.Context) error {
-			return secretsCommand(c, cmdDelete)
+			s, err := newSecretsConfig(c)
+			if err != nil {
+				return gcli.Exit(err.Error())
+			}
+			return delete(c, s)
 		},
 	}
 	generate := &cli.Command{
@@ -72,7 +85,11 @@ func secrets() *cli.Command {
 		ArgsUsage: "<KEY>",
 		Flags:     gen_flags,
 		Action: func(c *cli.Context) error {
-			return secretsCommand(c, cmdGenerate)
+			s, err := newSecretsConfig(c)
+			if err != nil {
+				return gcli.Exit(err.Error())
+			}
+			return generate(c, s)
 		},
 	}
 	get := &cli.Command{
@@ -81,7 +98,11 @@ func secrets() *cli.Command {
 		ArgsUsage: "<KEY>",
 		Flags:     flags,
 		Action: func(c *cli.Context) error {
-			return secretsCommand(c, cmdGet)
+			s, err := newSecretsConfig(c)
+			if err != nil {
+				return gcli.Exit(err.Error())
+			}
+			return get(c, s)
 		},
 	}
 	set := &cli.Command{
@@ -90,7 +111,11 @@ func secrets() *cli.Command {
 		ArgsUsage: "<KEY> <VALUE>",
 		Flags:     flags,
 		Action: func(c *cli.Context) error {
-			return secretsCommand(c, cmdSet)
+			s, err := newSecretsConfig(c)
+			if err != nil {
+				return gcli.Exit(err.Error())
+			}
+			return set(c, s)
 		},
 	}
 
@@ -101,45 +126,12 @@ func secrets() *cli.Command {
 	}
 }
 
-func secretsCommand(c *cli.Context, subcommand SecretsCommand) error {
-	// Setup configuration
-	var provider gcli.SecretProvider
-	switch c.String(flag_backend) {
-	case "aws":
-		config, err := aws.NewSecretProviderConfig(c)
-		if err != nil {
-			return gcli.Exit(fmt.Sprintf("error configuring secret backend: %s", err))
-		}
-
-		p := aws.NewSecretProvider(config)
-		provider = &p
-	case "mock":
-		provider = mockProvider
-	default:
-		return gcli.Exit(fmt.Sprintf("invalid backend: %s", c.String(flag_backend)))
-	}
-
-	// Handle subcommand
-	switch subcommand {
-	case cmdDelete:
-		return delete(c, provider)
-	case cmdGenerate:
-		return generate(c, provider)
-	case cmdGet:
-		return get(c, provider)
-	case cmdSet:
-		return set(c, provider)
-	default:
-		return gcli.Exit("unknown subcommand")
-	}
-}
-
-func delete(c *cli.Context, provider gcli.SecretProvider) error {
+func delete(c *cli.Context, s *secretsConfig) error {
 	if c.NArg() < 1 {
 		return gcli.Exit("must provide a key")
 	}
 
-	err := provider.Delete(c.Args().First())
+	err := s.provider.Delete(c.Args().First())
 	if err != nil {
 		return gcli.Exit(err.Error())
 	}
@@ -147,12 +139,12 @@ func delete(c *cli.Context, provider gcli.SecretProvider) error {
 	return nil
 }
 
-func generate(c *cli.Context, provider gcli.SecretProvider) error {
+func generate(c *cli.Context, s *secretsConfig) error {
 	if c.NArg() < 1 {
 		return gcli.Exit("must provide a key")
 	}
 
-	err := provider.Generate(c.Args().First(), c.Int("length"), c.Int("numbers"), c.Int("symbols"))
+	err := s.provider.Generate(c.Args().First(), c.Int("length"), c.Int("numbers"), c.Int("symbols"))
 	if err != nil {
 		return gcli.Exit(err.Error())
 	}
@@ -160,12 +152,12 @@ func generate(c *cli.Context, provider gcli.SecretProvider) error {
 	return nil
 }
 
-func get(c *cli.Context, provider gcli.SecretProvider) error {
+func get(c *cli.Context, s *secretsConfig) error {
 	if c.NArg() < 1 {
 		return gcli.Exit("must provide a key")
 	}
 
-	value, err := provider.Get(c.Args().First())
+	value, err := s.provider.Get(c.Args().First())
 	if err != nil {
 		return gcli.Exit(err.Error())
 	}
@@ -174,12 +166,12 @@ func get(c *cli.Context, provider gcli.SecretProvider) error {
 	return nil
 }
 
-func set(c *cli.Context, provider gcli.SecretProvider) error {
+func set(c *cli.Context, s *secretsConfig) error {
 	if c.NArg() < 2 {
 		return gcli.Exit("must provide a key and value")
 	}
 
-	err := provider.Set(c.Args().Get(0), c.Args().Get(1))
+	err := s.provider.Set(c.Args().Get(0), c.Args().Get(1))
 	if err != nil {
 		return gcli.Exit(err.Error())
 	}
