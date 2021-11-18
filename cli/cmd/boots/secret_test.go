@@ -21,7 +21,7 @@ func TestDelete(t *testing.T) {
 
 	// With no error
 	var got string
-	b := secretsConfig{
+	b := secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnDelete: func(key string) error {
 				got = key
@@ -35,7 +35,7 @@ func TestDelete(t *testing.T) {
 	is.Equal(expected, got)
 
 	// With error
-	b = secretsConfig{
+	b = secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnDelete: func(key string) error {
 				return fmt.Errorf("failed")
@@ -64,7 +64,7 @@ func TestGenerate(t *testing.T) {
 	var got_length int
 	var got_numbers int
 	var got_symbols int
-	s := secretsConfig{
+	s := secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnGenerate: func(key string, length int, nums int, symbols int) error {
 				got_key = key
@@ -84,7 +84,7 @@ func TestGenerate(t *testing.T) {
 	is.Equal(3, got_symbols)
 
 	// With error
-	s = secretsConfig{
+	s = secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnGenerate: func(key string, length int, nums int, symbols int) error {
 				return fmt.Errorf("failed")
@@ -107,7 +107,7 @@ func TestGet(t *testing.T) {
 
 	// With no error
 	var got string
-	s := secretsConfig{
+	s := secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnGet: func(key string) (string, error) {
 				got = key
@@ -121,7 +121,7 @@ func TestGet(t *testing.T) {
 	is.Equal(expected, got)
 
 	// With error
-	s = secretsConfig{
+	s = secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnGet: func(key string) (string, error) {
 				return "", fmt.Errorf("failed")
@@ -146,7 +146,7 @@ func TestSet(t *testing.T) {
 	// With no error
 	var got_key string
 	var got_value string
-	s := secretsConfig{
+	s := secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnSet: func(key string, value string) error {
 				got_key = key
@@ -162,7 +162,7 @@ func TestSet(t *testing.T) {
 	is.Equal(expected_value, got_value)
 
 	// With error
-	s = secretsConfig{
+	s = secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnSet: func(key string, value string) error {
 				return fmt.Errorf("failed")

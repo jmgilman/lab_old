@@ -12,12 +12,12 @@ const (
 	flag_backend = "backend"
 )
 
-type secretsConfig struct {
+type secretConfig struct {
 	provider gcli.SecretProvider
 }
 
-func newSecretsConfig(c *cli.Context) (*secretsConfig, error) {
-	sc := &secretsConfig{}
+func newSecretsConfig(c *cli.Context) (*secretConfig, error) {
+	sc := &secretConfig{}
 	switch c.String(flag_backend) {
 	case "aws":
 		pc, err := aws.NewSecretProviderConfig(c)
@@ -34,7 +34,7 @@ func newSecretsConfig(c *cli.Context) (*secretsConfig, error) {
 	return sc, nil
 }
 
-func secrets() *cli.Command {
+func secret() *cli.Command {
 	flags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "backend",
@@ -120,13 +120,13 @@ func secrets() *cli.Command {
 	}
 
 	return &cli.Command{
-		Name:        "secrets",
+		Name:        "secret",
 		Usage:       "Provides CRUD operations for secrets",
 		Subcommands: []*cli.Command{delete, generate, get, set},
 	}
 }
 
-func delete(c *cli.Context, s *secretsConfig) error {
+func delete(c *cli.Context, s *secretConfig) error {
 	if c.NArg() < 1 {
 		return gcli.Exit("must provide a key")
 	}
@@ -139,7 +139,7 @@ func delete(c *cli.Context, s *secretsConfig) error {
 	return nil
 }
 
-func generate(c *cli.Context, s *secretsConfig) error {
+func generate(c *cli.Context, s *secretConfig) error {
 	if c.NArg() < 1 {
 		return gcli.Exit("must provide a key")
 	}
@@ -152,7 +152,7 @@ func generate(c *cli.Context, s *secretsConfig) error {
 	return nil
 }
 
-func get(c *cli.Context, s *secretsConfig) error {
+func get(c *cli.Context, s *secretConfig) error {
 	if c.NArg() < 1 {
 		return gcli.Exit("must provide a key")
 	}
@@ -166,7 +166,7 @@ func get(c *cli.Context, s *secretsConfig) error {
 	return nil
 }
 
-func set(c *cli.Context, s *secretsConfig) error {
+func set(c *cli.Context, s *secretConfig) error {
 	if c.NArg() < 2 {
 		return gcli.Exit("must provide a key and value")
 	}
