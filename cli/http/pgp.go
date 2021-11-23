@@ -1,5 +1,6 @@
 package http
 
+// https://www.flatcar-linux.org/security/image-signing-key
 var publicKey string = `
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 

@@ -10,11 +10,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// imageConfig holds dependencies utilized by the image subcommand.
 type imageConfig struct {
 	fs       afero.Fs
 	provider gcli.ImageProvider
 }
 
+// newImageConfig returns an imageConfig configured with default dependencies.
 func newImageConfig(c *cli.Context) imageConfig {
 	return imageConfig{
 		fs:       afero.NewOsFs(),
@@ -22,6 +24,7 @@ func newImageConfig(c *cli.Context) imageConfig {
 	}
 }
 
+// image returns the image subcommand.
 func image(a gcli.App) *cli.Command {
 	fetch := &cli.Command{
 		Name:      "fetch",
@@ -47,11 +50,13 @@ func image(a gcli.App) *cli.Command {
 	}
 }
 
+// fetchResult is the result from calling fetch().
 type fetchResult struct {
 	Path string `json:"path"`
 	Size int64  `json:"size"`
 }
 
+// fetch downloads the specified Container Linux image to the local disk.
 func fetch(c *cli.Context, i imageConfig) (fetchResult, error) {
 	if c.NArg() < 2 {
 		return fetchResult{}, fmt.Errorf("Must provide a channel and target architecture")
@@ -92,6 +97,7 @@ func fetch(c *cli.Context, i imageConfig) (fetchResult, error) {
 	}, nil
 }
 
+// buildFilename constructs a filename from an image channel and architecture.
 func buildFilename(channel string, arch string) string {
 	return fmt.Sprintf("flatcar_%s_%s.bin.bz2", channel, arch)
 }

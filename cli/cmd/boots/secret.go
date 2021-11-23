@@ -12,10 +12,12 @@ const (
 	flag_backend = "backend"
 )
 
+// secretConfig holds dependencies utilized by the secret subcommand.
 type secretConfig struct {
 	provider gcli.SecretProvider
 }
 
+// newSecretConfig returns a secretConfig configured with default dependencies.
 func newSecretsConfig(c *cli.Context) (*secretConfig, error) {
 	sc := &secretConfig{}
 	switch c.String(flag_backend) {
@@ -34,6 +36,7 @@ func newSecretsConfig(c *cli.Context) (*secretConfig, error) {
 	return sc, nil
 }
 
+// secret returns the secret subcommand.
 func secret(a gcli.App) *cli.Command {
 	flags := []cli.Flag{
 		&cli.StringFlag{
@@ -126,10 +129,12 @@ func secret(a gcli.App) *cli.Command {
 	}
 }
 
+// deleteResult is the result from calling delete().
 type deleteResult struct {
 	Key string `json:"key"`
 }
 
+// delete deletes a secret.
 func delete(c *cli.Context, s *secretConfig) (deleteResult, error) {
 	if c.NArg() < 1 {
 		return deleteResult{}, fmt.Errorf("must provide a key")
@@ -145,11 +150,13 @@ func delete(c *cli.Context, s *secretConfig) (deleteResult, error) {
 	}, nil
 }
 
+// generateResult is the result from calling generate().
 type generateResult struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
+// generate generates a new random secret.
 func generate(c *cli.Context, s *secretConfig) (generateResult, error) {
 	if c.NArg() < 1 {
 		return generateResult{}, fmt.Errorf("must provide a key")
@@ -166,11 +173,13 @@ func generate(c *cli.Context, s *secretConfig) (generateResult, error) {
 	}, nil
 }
 
+// getResult is the result from calling get().
 type getResult struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
+// get fetches a secret.
 func get(c *cli.Context, s *secretConfig) (getResult, error) {
 	if c.NArg() < 1 {
 		return getResult{}, fmt.Errorf("must provide a key")
@@ -187,11 +196,13 @@ func get(c *cli.Context, s *secretConfig) (getResult, error) {
 	}, nil
 }
 
+// setResult is the result from calling set().
 type setResult struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
+// set sets a secret.
 func set(c *cli.Context, s *secretConfig) (setResult, error) {
 	if c.NArg() < 2 {
 		return setResult{}, fmt.Errorf("must provide a key and value")

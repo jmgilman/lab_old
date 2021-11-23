@@ -11,10 +11,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// App represents the boots CLI application.
 type App struct {
 	out afero.File
 }
 
+// Exit converts the given data and error into a gcli.AppResult and then writes
+// the marshalled JSON output to the configured output.
 func (a *App) Exit(data interface{}, err error) error {
 	var result gcli.AppResult
 	if err != nil {

@@ -2,16 +2,19 @@ package cli
 
 import "fmt"
 
+// App represents a CLI application.
 type App interface {
 	Exit(data interface{}, err error) error
 }
 
+// AppResult is the result returned from running a CLI command.
 type AppResult struct {
 	Data    interface{} `json:"data"`
 	Error   string      `json:"error"`
 	Success bool        `json:"success"`
 }
 
+// AppError is an error returned from running a CLI command.
 type AppError struct {
 	err error
 }
@@ -26,10 +29,4 @@ func (a AppError) ExitCode() int {
 
 func (a AppError) Format(s fmt.State, verb rune) {
 	s.Write([]byte(fmt.Sprintf("An error occurred: %s", a.err)))
-}
-
-func Exit(message string) AppError {
-	return AppError{
-		err: fmt.Errorf(message),
-	}
 }
