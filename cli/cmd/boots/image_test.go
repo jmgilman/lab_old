@@ -18,6 +18,7 @@ func TestFetch(t *testing.T) {
 	expected_channel := "stable"
 	expected_arch := "aarch64"
 	expected_data := bytes.NewBuffer([]byte("test"))
+	expected_size := int64(expected_data.Len())
 	expected_filename := buildFilename(expected_channel, expected_arch)
 
 	set := flag.NewFlagSet("test", 0)
@@ -35,7 +36,7 @@ func TestFetch(t *testing.T) {
 			FnFetch: func(channel, arch string) (io.ReadCloser, int64, error) {
 				got_fetch_channel = channel
 				got_fetch_arch = arch
-				return io.NopCloser(expected_data), int64(expected_data.Len()), nil
+				return io.NopCloser(expected_data), expected_size, nil
 			},
 			FnValidate: func(data io.ReadCloser, channel, arch string) error {
 				got_validate_channel = channel
@@ -47,13 +48,16 @@ func TestFetch(t *testing.T) {
 		},
 	}
 
-	err := fetch(ctx, cfg)
+	result, err := fetch(ctx, cfg)
 	is.NoErr(err)
 	is.Equal(got_fetch_channel, expected_channel)
 	is.Equal(got_fetch_arch, expected_arch)
 	is.Equal(got_validate_channel, expected_channel)
 	is.Equal(got_validate_arch, expected_arch)
 	is.Equal(string(got_data), "test")
+
+	is.Equal(result.Path, expected_filename)
+	is.Equal(result.Size, expected_size)
 
 	file, err := cfg.fs.Open(expected_filename)
 	is.NoErr(err)
@@ -75,7 +79,7 @@ func TestFetch(t *testing.T) {
 		},
 	}
 
-	err = fetch(ctx, cfg)
+	_, err = fetch(ctx, cfg)
 	is.Equal(err.Error(), "failed")
 
 	// With validate error
@@ -91,7 +95,7 @@ func TestFetch(t *testing.T) {
 		},
 	}
 
-	err = fetch(ctx, cfg)
+	_, err = fetch(ctx, cfg)
 	is.Equal(err.Error(), "failed")
 }
 

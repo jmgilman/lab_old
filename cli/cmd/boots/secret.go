@@ -34,7 +34,7 @@ func newSecretsConfig(c *cli.Context) (*secretConfig, error) {
 	return sc, nil
 }
 
-func secret() *cli.Command {
+func secret(a gcli.App) *cli.Command {
 	flags := []cli.Flag{
 		&cli.StringFlag{
 			Name:  "backend",
@@ -74,9 +74,9 @@ func secret() *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return gcli.Exit(err.Error())
+				return a.Exit(nil, err)
 			}
-			return delete(c, s)
+			return a.Exit(delete(c, s))
 		},
 	}
 	generate := &cli.Command{
@@ -87,9 +87,9 @@ func secret() *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return gcli.Exit(err.Error())
+				return a.Exit(nil, err)
 			}
-			return generate(c, s)
+			return a.Exit(generate(c, s))
 		},
 	}
 	get := &cli.Command{
@@ -100,9 +100,9 @@ func secret() *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return gcli.Exit(err.Error())
+				return a.Exit(nil, err)
 			}
-			return get(c, s)
+			return a.Exit(get(c, s))
 		},
 	}
 	set := &cli.Command{
@@ -113,9 +113,9 @@ func secret() *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return gcli.Exit(err.Error())
+				return a.Exit(nil, err)
 			}
-			return set(c, s)
+			return a.Exit(set(c, s))
 		},
 	}
 
@@ -126,55 +126,84 @@ func secret() *cli.Command {
 	}
 }
 
-func delete(c *cli.Context, s *secretConfig) error {
+type deleteResult struct {
+	Key string `json:"key"`
+}
+
+func delete(c *cli.Context, s *secretConfig) (deleteResult, error) {
 	if c.NArg() < 1 {
-		return gcli.Exit("must provide a key")
+		return deleteResult{}, fmt.Errorf("must provide a key")
 	}
 
 	err := s.provider.Delete(c.Args().First())
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return deleteResult{}, err
 	}
 
-	return nil
+	return deleteResult{
+		Key: c.Args().First(),
+	}, nil
 }
 
-func generate(c *cli.Context, s *secretConfig) error {
+type generateResult struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func generate(c *cli.Context, s *secretConfig) (generateResult, error) {
 	if c.NArg() < 1 {
-		return gcli.Exit("must provide a key")
+		return generateResult{}, fmt.Errorf("must provide a key")
 	}
 
-	err := s.provider.Generate(c.Args().First(), c.Int("length"), c.Int("numbers"), c.Int("symbols"))
+	value, err := s.provider.Generate(c.Args().First(), c.Int("length"), c.Int("numbers"), c.Int("symbols"))
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return generateResult{}, err
 	}
 
-	return nil
+	return generateResult{
+		Key:   c.Args().First(),
+		Value: value,
+	}, nil
 }
 
-func get(c *cli.Context, s *secretConfig) error {
+type getResult struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func get(c *cli.Context, s *secretConfig) (getResult, error) {
 	if c.NArg() < 1 {
-		return gcli.Exit("must provide a key")
+		return getResult{}, fmt.Errorf("must provide a key")
 	}
 
 	value, err := s.provider.Get(c.Args().First())
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return getResult{}, err
 	}
 
-	fmt.Print(value)
-	return nil
+	return getResult{
+		Key:   c.Args().First(),
+		Value: value,
+	}, nil
 }
 
-func set(c *cli.Context, s *secretConfig) error {
+type setResult struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func set(c *cli.Context, s *secretConfig) (setResult, error) {
 	if c.NArg() < 2 {
-		return gcli.Exit("must provide a key and value")
+		return setResult{}, fmt.Errorf("must provide a key and value")
 	}
 
 	err := s.provider.Set(c.Args().Get(0), c.Args().Get(1))
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return setResult{}, err
 	}
 
-	return nil
+	return setResult{
+		Key:   c.Args().Get(0),
+		Value: c.Args().Get(1),
+	}, nil
 }

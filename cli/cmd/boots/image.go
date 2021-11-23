@@ -6,7 +6,6 @@ import (
 
 	gcli "github.com/HomeOperations/jmgilman/cli"
 	"github.com/HomeOperations/jmgilman/cli/http"
-	"github.com/cheggaaa/pb/v3"
 	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 )
@@ -23,14 +22,14 @@ func newImageConfig(c *cli.Context) imageConfig {
 	}
 }
 
-func image() *cli.Command {
+func image(a gcli.App) *cli.Command {
 	fetch := &cli.Command{
 		Name:      "fetch",
 		Usage:     "Downloads the specified Container Linux image to the local disk",
 		ArgsUsage: "<CHANNEL> <ARCH>",
 		Action: func(c *cli.Context) error {
 			i := newImageConfig(c)
-			return fetch(c, i)
+			return a.Exit(fetch(c, i))
 		},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -48,51 +47,49 @@ func image() *cli.Command {
 	}
 }
 
-func fetch(c *cli.Context, i imageConfig) error {
+type fetchResult struct {
+	Path string `json:"path"`
+	Size int64  `json:"size"`
+}
+
+func fetch(c *cli.Context, i imageConfig) (fetchResult, error) {
 	if c.NArg() < 2 {
-		fmt.Println(c.NArg())
-		return gcli.Exit("must provide a channel and target architecture")
+		return fetchResult{}, fmt.Errorf("Must provide a channel and target architecture")
 	}
 
 	filename := buildFilename(c.Args().Get(0), c.Args().Get(1))
 	out, err := i.fs.Create(filename)
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return fetchResult{}, err
 	}
 	defer out.Close()
 
 	data, size, err := i.provider.Fetch(c.Args().Get(0), c.Args().Get(1))
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return fetchResult{}, err
 	}
 	defer data.Close()
 
-	if c.Bool("quiet") {
-		_, err = io.Copy(out, data)
-	} else {
-		bar := pb.Full.Start64(size)
-		barReader := bar.NewProxyReader(data)
-
-		_, err = io.Copy(out, barReader)
-		bar.Finish()
-	}
+	_, err = io.Copy(out, data)
 
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return fetchResult{}, err
 	}
 
-	// Validate image
-	_, err = out.Seek(io.SeekStart, 0)
+	_, err = out.Seek(io.SeekStart, 0) // Reset reader for validation
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return fetchResult{}, err
 	}
 
 	err = i.provider.Validate(out, c.Args().Get(0), c.Args().Get(1))
 	if err != nil {
-		return gcli.Exit(err.Error())
+		return fetchResult{}, err
 	}
 
-	return nil
+	return fetchResult{
+		Path: filename,
+		Size: size,
+	}, nil
 }
 
 func buildFilename(channel string, arch string) string {

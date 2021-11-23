@@ -46,7 +46,7 @@ func (o *openpgpClient) ReadArmoredKeyRing(r io.Reader) (openpgp.EntityList, err
 }
 
 func (o *openpgpClient) CheckDetachedSignature(keyring openpgp.KeyRing, signed io.Reader, signature io.Reader) (signer *openpgp.Entity, err error) {
-	return openpgp.CheckArmoredDetachedSignature(keyring, signed, signature)
+	return openpgp.CheckDetachedSignature(keyring, signed, signature)
 }
 
 // buildUrl returns the fully qualified URL to the requested Container Linux
@@ -95,5 +95,6 @@ func (i *ImageProvider) Validate(data io.ReadCloser, channel string, arch string
 func NewImageProvider() gcli.ImageProvider {
 	return &ImageProvider{
 		httpClient: &http.Client{},
+		pgpClient:  &openpgpClient{},
 	}
 }

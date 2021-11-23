@@ -2,6 +2,16 @@ package cli
 
 import "fmt"
 
+type App interface {
+	Exit(data interface{}, err error) error
+}
+
+type AppResult struct {
+	Data    interface{} `json:"data"`
+	Error   string      `json:"error"`
+	Success bool        `json:"success"`
+}
+
 type AppError struct {
 	err error
 }

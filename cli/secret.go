@@ -18,7 +18,7 @@ type SecretProvider interface {
 
 	// Generates a new random secret value with the given key. Overwrites any
 	// previous value that existed with the key.
-	Generate(key string, length int, nums int, symbols int) error
+	Generate(key string, length int, nums int, symbols int) (string, error)
 
 	// Returns the value of the secret with the given key
 	Get(key string) (string, error)

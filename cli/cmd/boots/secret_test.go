@@ -30,9 +30,10 @@ func TestDelete(t *testing.T) {
 		},
 	}
 
-	err := delete(ctx, &b)
+	result, err := delete(ctx, &b)
 	is.NoErr(err)
 	is.Equal(expected, got)
+	is.Equal(result.Key, expected)
 
 	// With error
 	b = secretConfig{
@@ -43,20 +44,21 @@ func TestDelete(t *testing.T) {
 		},
 	}
 
-	err = delete(ctx, &b)
+	_, err = delete(ctx, &b)
 	is.Equal(err.Error(), "failed")
 }
 
 func TestGenerate(t *testing.T) {
 	is := is.New(t)
-	expected := "test"
+	expected_key := "key"
+	expected_value := "value"
 
 	flagSet := flag.NewFlagSet("test", 0)
 	flagSet.String(flag_backend, "mock", "test")
 	flagSet.Int("length", 12, "test")
 	flagSet.Int("numbers", 2, "test")
 	flagSet.Int("symbols", 3, "test")
-	_ = flagSet.Parse([]string{expected})
+	_ = flagSet.Parse([]string{expected_key})
 	ctx := cli.NewContext(&cli.App{}, flagSet, nil)
 
 	// With no error
@@ -66,59 +68,64 @@ func TestGenerate(t *testing.T) {
 	var got_symbols int
 	s := secretConfig{
 		provider: &mocks.MockSecretProvider{
-			FnGenerate: func(key string, length int, nums int, symbols int) error {
+			FnGenerate: func(key string, length int, nums int, symbols int) (string, error) {
 				got_key = key
 				got_length = length
 				got_numbers = nums
 				got_symbols = symbols
-				return nil
+				return expected_value, nil
 			},
 		},
 	}
 
-	err := generate(ctx, &s)
+	result, err := generate(ctx, &s)
 	is.NoErr(err)
-	is.Equal(expected, got_key)
+	is.Equal(expected_key, got_key)
 	is.Equal(12, got_length)
 	is.Equal(2, got_numbers)
 	is.Equal(3, got_symbols)
+	is.Equal(result.Key, expected_key)
+	is.Equal(result.Value, expected_value)
 
 	// With error
 	s = secretConfig{
 		provider: &mocks.MockSecretProvider{
-			FnGenerate: func(key string, length int, nums int, symbols int) error {
-				return fmt.Errorf("failed")
+			FnGenerate: func(key string, length int, nums int, symbols int) (string, error) {
+				return "", fmt.Errorf("failed")
 			},
 		},
 	}
 
-	err = generate(ctx, &s)
+	_, err = generate(ctx, &s)
 	is.Equal(err.Error(), "failed")
 }
 
 func TestGet(t *testing.T) {
 	is := is.New(t)
-	expected := "test"
+	expected_key := "key"
+	expected_value := "value"
 
 	flagSet := flag.NewFlagSet("test", 0)
 	flagSet.String(flag_backend, "mock", "test")
-	_ = flagSet.Parse([]string{expected})
+	_ = flagSet.Parse([]string{expected_key})
 	ctx := cli.NewContext(&cli.App{}, flagSet, nil)
 
 	// With no error
-	var got string
+	var got_key string
 	s := secretConfig{
 		provider: &mocks.MockSecretProvider{
 			FnGet: func(key string) (string, error) {
-				got = key
-				return "", nil
+				got_key = key
+				return expected_value, nil
 			},
 		},
 	}
 
-	err := get(ctx, &s)
+	result, err := get(ctx, &s)
 	is.NoErr(err)
-	is.Equal(expected, got)
+	is.Equal(expected_key, got_key)
+	is.Equal(result.Key, expected_key)
+	is.Equal(result.Value, expected_value)
 
 	// With error
 	s = secretConfig{
@@ -129,7 +136,7 @@ func TestGet(t *testing.T) {
 		},
 	}
 
-	err = get(ctx, &s)
+	_, err = get(ctx, &s)
 	is.Equal(err.Error(), "failed")
 }
 
@@ -156,10 +163,12 @@ func TestSet(t *testing.T) {
 		},
 	}
 
-	err := set(ctx, &s)
+	result, err := set(ctx, &s)
 	is.NoErr(err)
 	is.Equal(expected_key, got_key)
 	is.Equal(expected_value, got_value)
+	is.Equal(result.Key, expected_key)
+	is.Equal(result.Value, expected_value)
 
 	// With error
 	s = secretConfig{
@@ -170,6 +179,6 @@ func TestSet(t *testing.T) {
 		},
 	}
 
-	err = set(ctx, &s)
+	_, err = set(ctx, &s)
 	is.Equal(err.Error(), "failed")
 }

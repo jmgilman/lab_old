@@ -53,10 +53,10 @@ func (s *SecretProvider) Delete(key string) error {
 
 // Generate generates a new random secret value with the given key. Overwrites any
 // previous value that existed with the key
-func (s *SecretProvider) Generate(key string, length int, nums int, symbols int) error {
+func (s *SecretProvider) Generate(key string, length int, nums int, symbols int) (string, error) {
 	res, err := s.generator(length, nums, symbols, false, false)
 	if err != nil {
-		return fmt.Errorf("failed generating random password")
+		return "", fmt.Errorf("failed generating random password")
 	}
 
 	in := ssm.PutParameterInput{
@@ -68,10 +68,10 @@ func (s *SecretProvider) Generate(key string, length int, nums int, symbols int)
 
 	_, err = s.ssm.PutParameter(&in)
 	if err != nil {
-		return fmt.Errorf("error querying AWS: %s", err)
+		return "", fmt.Errorf("error querying AWS: %s", err)
 	}
 
-	return nil
+	return res, nil
 }
 
 // Get returns the value of the secret with the given key
