@@ -11,6 +11,11 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	flag_quiet   = "quiet"
+	flag_verbose = "verbose"
+)
+
 // App represents the boots CLI application.
 type App struct {
 	out afero.File
@@ -18,7 +23,7 @@ type App struct {
 
 // Exit converts the given data and error into a gcli.AppResult and then writes
 // the marshalled JSON output to the configured output.
-func (a *App) Exit(data interface{}, err error) error {
+func (a *App) Exit(c *cli.Context, data interface{}, err error) error {
 	var result gcli.AppResult
 	if err != nil {
 		result = gcli.AppResult{
@@ -37,7 +42,9 @@ func (a *App) Exit(data interface{}, err error) error {
 		return fmt.Errorf("Error serializing result")
 	}
 
-	_, err = a.out.Write(text)
+	if !c.Bool(flag_quiet) {
+		_, err = a.out.Write(text)
+	}
 	return err
 }
 
@@ -62,7 +69,12 @@ func main() {
 		Commands: []*cli.Command{image, secret},
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:    "verbose",
+				Name:    flag_quiet,
+				Usage:   "disable output to STDOUT",
+				Aliases: []string{"q"},
+			},
+			&cli.BoolFlag{
+				Name:    flag_verbose,
 				Usage:   "enable verbose mode",
 				Aliases: []string{"v"},
 			},

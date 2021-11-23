@@ -1,10 +1,14 @@
 package cli
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/urfave/cli/v2"
+)
 
 // App represents a CLI application.
 type App interface {
-	Exit(data interface{}, err error) error
+	Exit(c *cli.Context, data interface{}, err error) error
 }
 
 // AppResult is the result returned from running a CLI command.

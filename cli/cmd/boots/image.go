@@ -38,7 +38,8 @@ func image(a gcli.App) *cli.Command {
 		Usage: "Downloads the specified Container Linux image to the local disk",
 		Action: func(c *cli.Context) error {
 			i := newImageConfig(c)
-			return a.Exit(fetch(c, i))
+			data, err := fetch(c, i)
+			return a.Exit(c, data, err)
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{

@@ -80,9 +80,11 @@ func secret(a gcli.App) *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return a.Exit(nil, err)
+				return a.Exit(c, nil, err)
 			}
-			return a.Exit(delete(c, s))
+
+			data, err := delete(c, s)
+			return a.Exit(c, data, err)
 		},
 	}
 	generate := &cli.Command{
@@ -93,9 +95,11 @@ func secret(a gcli.App) *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return a.Exit(nil, err)
+				return a.Exit(c, nil, err)
 			}
-			return a.Exit(generate(c, s))
+
+			data, err := generate(c, s)
+			return a.Exit(c, data, err)
 		},
 	}
 	get := &cli.Command{
@@ -106,9 +110,11 @@ func secret(a gcli.App) *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return a.Exit(nil, err)
+				return a.Exit(c, nil, err)
 			}
-			return a.Exit(get(c, s))
+
+			data, err := get(c, s)
+			return a.Exit(c, data, err)
 		},
 	}
 	set := &cli.Command{
@@ -119,9 +125,11 @@ func secret(a gcli.App) *cli.Command {
 		Action: func(c *cli.Context) error {
 			s, err := newSecretsConfig(c)
 			if err != nil {
-				return a.Exit(nil, err)
+				return a.Exit(c, nil, err)
 			}
-			return a.Exit(set(c, s))
+
+			data, err := set(c, s)
+			return a.Exit(c, data, err)
 		},
 	}
 
