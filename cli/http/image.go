@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	gcli "github.com/HomeOperations/jmgilman/cli"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/openpgp"
 )
 
@@ -57,11 +58,17 @@ func (i *ImageProvider) buildURL(channel string, arch string, filename string) s
 // download downloads the remote file at the given URL, returning a stream of
 // data and it's expected size.
 func (i *ImageProvider) download(url string) (io.ReadCloser, int64, error) {
+	log.Info("Sending request to %s", url)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	resp, err := i.httpClient.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
+
+	log.WithFields(log.Fields{
+		"status": resp.StatusCode,
+		"length": resp.ContentLength,
+	}).Debug("Response received")
 
 	return resp.Body, resp.ContentLength, nil
 }
@@ -71,20 +78,28 @@ func (i *ImageProvider) Fetch(channel, arch, filename string) (io.ReadCloser, in
 }
 
 func (i *ImageProvider) Validate(data io.ReadCloser, channel, arch, filename string) error {
+	log.WithFields(log.Fields{
+		"channel":      channel,
+		"architecture": arch,
+		"filename":     filename,
+	}).Debug("Validating file with signature")
 	url := fmt.Sprintf("%s.sig", i.buildURL(channel, arch, filename))
 
 	sig, _, err := i.download(url)
 	if err != nil {
+		log.Error("Error downloading signature file: %s", err)
 		return err
 	}
 
 	keyring, err := i.pgpClient.ReadArmoredKeyRing(strings.NewReader(publicKey))
 	if err != nil {
+		log.Error("Error parsing PGP public key: %s", err)
 		return err
 	}
 
 	_, err = i.pgpClient.CheckDetachedSignature(keyring, data, sig)
 	if err != nil {
+		log.Error("Error validating signature: %s", err)
 		return gcli.ErrSigCheckFailed
 	}
 

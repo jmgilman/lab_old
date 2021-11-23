@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
 	"github.com/sethvargo/go-password/password"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
 
@@ -35,6 +36,7 @@ type PasswordGenerator func(length int, numDigits int, numSymbols int, noUpper b
 
 // Delete deletes the secret with the given key
 func (s *SecretProvider) Delete(key string) error {
+	log.Info("Sending delete request for key: %s", key)
 	in := ssm.DeleteParameterInput{
 		Name: &key,
 	}
@@ -54,6 +56,13 @@ func (s *SecretProvider) Delete(key string) error {
 // Generate generates a new random secret value with the given key. Overwrites
 // any previous value that existed with the key.
 func (s *SecretProvider) Generate(key string, length int, nums int, symbols int) (string, error) {
+	log.Info("Sending put request for key: %s", key)
+
+	log.WithFields(log.Fields{
+		"length":  length,
+		"nums":    nums,
+		"symbols": symbols,
+	}).Debug("Generating password")
 	res, err := s.generator(length, nums, symbols, false, false)
 	if err != nil {
 		return "", fmt.Errorf("failed generating random password")
@@ -76,6 +85,7 @@ func (s *SecretProvider) Generate(key string, length int, nums int, symbols int)
 
 // Get returns the value of the secret with the given key.
 func (s *SecretProvider) Get(key string) (string, error) {
+	log.Info("Sending get request for key: %s", key)
 	in := ssm.GetParameterInput{
 		Name:           &key,
 		WithDecryption: aws.Bool(true),
@@ -96,6 +106,7 @@ func (s *SecretProvider) Get(key string) (string, error) {
 // Set sets the value of the secret with the given key. Overwrites any previous
 // value that existed with the key.
 func (s *SecretProvider) Set(key string, value string) error {
+	log.Info("Sending set request for key: %s", key)
 	in := ssm.PutParameterInput{
 		Name:      &key,
 		Value:     &value,
@@ -162,6 +173,7 @@ func NewSecretProviderConfig(c *cli.Context) (SecretProviderConfig, error) {
 			return SecretProviderConfig{}, fmt.Errorf("must supply both access and secret keys")
 		}
 
+		log.Info("Configuring static credentials")
 		creds := credentials.NewCredentials(&credentials.StaticProvider{
 			Value: credentials.Value{
 				AccessKeyID:     c.String(flag_access_key),
@@ -174,10 +186,11 @@ func NewSecretProviderConfig(c *cli.Context) (SecretProviderConfig, error) {
 	}
 
 	if c.IsSet(flag_region) {
+		log.Info("Using %s region", c.String(flag_region))
 		config.Region = aws.String(c.String(flag_region))
 	}
 
-	if c.Bool("verbose") {
+	if c.Bool("debug") {
 		config.LogLevel = aws.LogLevel(aws.LogDebug)
 	}
 

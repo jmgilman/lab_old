@@ -3,15 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	gcli "github.com/HomeOperations/jmgilman/cli"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 	"github.com/urfave/cli/v2"
 )
 
 const (
+	flag_debug   = "debug"
 	flag_quiet   = "quiet"
 	flag_verbose = "verbose"
 )
@@ -67,7 +69,13 @@ func main() {
 		HelpName: "boots",
 		Usage:    "A CLI tool for bootstrapping the GLab stack",
 		Commands: []*cli.Command{image, secret},
+		Before:   initLogger,
 		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    flag_debug,
+				Usage:   "enable debug logging",
+				Aliases: []string{"d"},
+			},
 			&cli.BoolFlag{
 				Name:    flag_quiet,
 				Usage:   "disable output to STDOUT",
@@ -75,7 +83,7 @@ func main() {
 			},
 			&cli.BoolFlag{
 				Name:    flag_verbose,
-				Usage:   "enable verbose mode",
+				Usage:   "enable informational logging",
 				Aliases: []string{"v"},
 			},
 		},
@@ -85,4 +93,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initLogger(c *cli.Context) error {
+	log.SetLevel(logrus.FatalLevel)
+
+	if c.Bool(flag_verbose) {
+		log.SetLevel(logrus.InfoLevel)
+	}
+
+	if c.Bool(flag_debug) {
+		log.SetLevel(logrus.DebugLevel)
+	}
+
+	return nil
 }
