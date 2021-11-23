@@ -11,7 +11,6 @@ import (
 )
 
 var baseURL string = "https://%s.release.flatcar-linux.net/%s-usr/current/%s"
-var imageName string = "flatcar_production_image.bin.bz2"
 
 // httpClient is an interface for processing HTTP requests and returning HTTP
 // responses.
@@ -51,8 +50,8 @@ func (o *openpgpClient) CheckDetachedSignature(keyring openpgp.KeyRing, signed i
 
 // buildUrl returns the fully qualified URL to the requested Container Linux
 // production image file.
-func (i *ImageProvider) buildURL(channel string, arch string) string {
-	return fmt.Sprintf(baseURL, channel, arch, imageName)
+func (i *ImageProvider) buildURL(channel string, arch string, filename string) string {
+	return fmt.Sprintf(baseURL, channel, arch, filename)
 }
 
 // download downloads the remote file at the given URL, returning a stream of
@@ -67,12 +66,12 @@ func (i *ImageProvider) download(url string) (io.ReadCloser, int64, error) {
 	return resp.Body, resp.ContentLength, nil
 }
 
-func (i *ImageProvider) Fetch(channel string, arch string) (io.ReadCloser, int64, error) {
-	return i.download(i.buildURL(channel, arch))
+func (i *ImageProvider) Fetch(channel, arch, filename string) (io.ReadCloser, int64, error) {
+	return i.download(i.buildURL(channel, arch, filename))
 }
 
-func (i *ImageProvider) Validate(data io.ReadCloser, channel string, arch string) error {
-	url := fmt.Sprintf("%s.sig", i.buildURL(channel, arch))
+func (i *ImageProvider) Validate(data io.ReadCloser, channel, arch, filename string) error {
+	url := fmt.Sprintf("%s.sig", i.buildURL(channel, arch, filename))
 
 	sig, _, err := i.download(url)
 	if err != nil {

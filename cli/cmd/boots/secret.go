@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	flag_backend = "backend"
+	flag_secret_backend = "backend"
+	flag_secret_length  = "length"
+	flag_secret_numbers = "numbers"
+	flag_secret_symbols = "symbols"
 )
 
 // secretConfig holds dependencies utilized by the secret subcommand.
@@ -20,7 +23,7 @@ type secretConfig struct {
 // newSecretConfig returns a secretConfig configured with default dependencies.
 func newSecretsConfig(c *cli.Context) (*secretConfig, error) {
 	sc := &secretConfig{}
-	switch c.String(flag_backend) {
+	switch c.String(flag_secret_backend) {
 	case "aws":
 		pc, err := aws.NewSecretProviderConfig(c)
 		if err != nil {
@@ -30,7 +33,7 @@ func newSecretsConfig(c *cli.Context) (*secretConfig, error) {
 		p := aws.NewSecretProvider(pc)
 		sc.provider = &p
 	default:
-		return nil, fmt.Errorf("invalid backend: %s", c.String(flag_backend))
+		return nil, fmt.Errorf("invalid backend: %s", c.String(flag_secret_backend))
 	}
 
 	return sc, nil
@@ -49,19 +52,19 @@ func secret(a gcli.App) *cli.Command {
 
 	gen_flags := []cli.Flag{
 		&cli.IntFlag{
-			Name:    "length",
+			Name:    flag_secret_length,
 			Aliases: []string{"l"},
 			Value:   16,
 			Usage:   "length of the generated password",
 		},
 		&cli.IntFlag{
-			Name:    "numbers",
+			Name:    flag_secret_numbers,
 			Aliases: []string{"n"},
 			Value:   1,
 			Usage:   "The quantity of numbers to include in the password",
 		},
 		&cli.IntFlag{
-			Name:    "symbols",
+			Name:    flag_secret_symbols,
 			Aliases: []string{"s"},
 			Value:   1,
 			Usage:   "The quantity of symbols to include in the password",
@@ -162,7 +165,7 @@ func generate(c *cli.Context, s *secretConfig) (generateResult, error) {
 		return generateResult{}, fmt.Errorf("must provide a key")
 	}
 
-	value, err := s.provider.Generate(c.Args().First(), c.Int("length"), c.Int("numbers"), c.Int("symbols"))
+	value, err := s.provider.Generate(c.Args().First(), c.Int(flag_secret_length), c.Int(flag_secret_numbers), c.Int(flag_secret_symbols))
 	if err != nil {
 		return generateResult{}, err
 	}

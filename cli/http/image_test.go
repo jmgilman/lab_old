@@ -36,12 +36,12 @@ func (m *MockPGPClient) CheckDetachedSignature(keyring openpgp.KeyRing, signed i
 
 func TestBuildURL(t *testing.T) {
 	is := is.New(t)
-	expected := fmt.Sprintf(baseURL, "alpha", "arm64", imageName)
+	expected := fmt.Sprintf(baseURL, "alpha", "arm64", "flatcar_production_image.bin.bz2")
 
 	fetcher := ImageProvider{
 		httpClient: &MockHTTPClient{},
 	}
-	got := fetcher.buildURL("alpha", "arm64")
+	got := fetcher.buildURL("alpha", "arm64", "flatcar_production_image.bin.bz2")
 	is.Equal(expected, got)
 }
 
@@ -91,7 +91,7 @@ func TestDownload(t *testing.T) {
 
 func TestFetch(t *testing.T) {
 	is := is.New(t)
-	expected_url := fmt.Sprintf(baseURL, "alpha", "arm64", imageName)
+	expected_url := fmt.Sprintf(baseURL, "alpha", "arm64", "flatcar_production_image.bin.bz2")
 
 	var got_url string
 	mock := MockHTTPClient{
@@ -106,14 +106,14 @@ func TestFetch(t *testing.T) {
 	fetcher := ImageProvider{
 		httpClient: &mock,
 	}
-	_, _, err := fetcher.Fetch("alpha", "arm64")
+	_, _, err := fetcher.Fetch("alpha", "arm64", "flatcar_production_image.bin.bz2")
 	is.NoErr(err)
 	is.Equal(expected_url, got_url)
 }
 
 func TestValidate(t *testing.T) {
 	is := is.New(t)
-	expected_url := fmt.Sprintf("%s.sig", fmt.Sprintf(baseURL, "alpha", "arm64", imageName))
+	expected_url := fmt.Sprintf("%s.sig", fmt.Sprintf(baseURL, "alpha", "arm64", "flatcar_production_image.bin.bz2"))
 	expected_pub_key := publicKey
 	expected_data := "test"
 	expected_sig_data := "testsignature"
@@ -153,7 +153,7 @@ func TestValidate(t *testing.T) {
 		httpClient: &mock_http,
 		pgpClient:  &mock_pgp,
 	}
-	err := fetcher.Validate(io.NopCloser(strings.NewReader(expected_data)), "alpha", "arm64")
+	err := fetcher.Validate(io.NopCloser(strings.NewReader(expected_data)), "alpha", "arm64", "flatcar_production_image.bin.bz2")
 	is.NoErr(err)
 	is.Equal(expected_url, got_url)
 	is.Equal(expected_pub_key, got_pub_key)
@@ -169,6 +169,6 @@ func TestValidate(t *testing.T) {
 		httpClient: &mock_http,
 		pgpClient:  &mock_pgp,
 	}
-	err = fetcher.Validate(io.NopCloser(strings.NewReader(expected_data)), "alpha", "arm64")
+	err = fetcher.Validate(io.NopCloser(strings.NewReader(expected_data)), "alpha", "arm64", "flatcar_production_image.bin.bz2")
 	is.True(errors.Is(err, gcli.ErrSigCheckFailed))
 }

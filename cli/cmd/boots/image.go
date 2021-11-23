@@ -10,6 +10,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+const (
+	flag_image_architecture = "architecture"
+	flag_image_channel      = "channel"
+	flag_image_name         = "image"
+	flag_image_output       = "output"
+)
+
 // imageConfig holds dependencies utilized by the image subcommand.
 type imageConfig struct {
 	fs       afero.Fs
@@ -27,18 +34,36 @@ func newImageConfig(c *cli.Context) imageConfig {
 // image returns the image subcommand.
 func image(a gcli.App) *cli.Command {
 	fetch := &cli.Command{
-		Name:      "fetch",
-		Usage:     "Downloads the specified Container Linux image to the local disk",
-		ArgsUsage: "<CHANNEL> <ARCH>",
+		Name:  "fetch",
+		Usage: "Downloads the specified Container Linux image to the local disk",
 		Action: func(c *cli.Context) error {
 			i := newImageConfig(c)
 			return a.Exit(fetch(c, i))
 		},
 		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:    "quiet",
-				Aliases: []string{"q"},
-				Usage:   "Disables printing to STDOUT",
+			&cli.StringFlag{
+				Name:    flag_image_architecture,
+				Aliases: []string{"a"},
+				Usage:   "Target architecture",
+				Value:   "amd64",
+			},
+			&cli.StringFlag{
+				Name:    flag_image_channel,
+				Aliases: []string{"c"},
+				Usage:   "Target channel",
+				Value:   "stable",
+			},
+			&cli.StringFlag{
+				Name:    flag_image_name,
+				Aliases: []string{"i"},
+				Usage:   "Target image filename",
+				Value:   "flatcar_production_image.bin.bz2",
+			},
+			&cli.StringFlag{
+				Name:        flag_image_output,
+				Aliases:     []string{"o"},
+				Usage:       "Output filename",
+				DefaultText: "target image filename",
 			},
 		},
 	}
@@ -58,18 +83,25 @@ type fetchResult struct {
 
 // fetch downloads the specified Container Linux image to the local disk.
 func fetch(c *cli.Context, i imageConfig) (fetchResult, error) {
-	if c.NArg() < 2 {
-		return fetchResult{}, fmt.Errorf("Must provide a channel and target architecture")
+	arch := c.String(flag_image_architecture)
+	channel := c.String(flag_image_channel)
+	filename := c.String(flag_image_name)
+
+	var output_file string
+	if c.IsSet(flag_image_output) {
+		output_file = c.String(flag_image_output)
+	} else {
+		fmt.Println("Value:", c.String(flag_image_output))
+		output_file = filename
 	}
 
-	filename := buildFilename(c.Args().Get(0), c.Args().Get(1))
-	out, err := i.fs.Create(filename)
+	out, err := i.fs.Create(output_file)
 	if err != nil {
 		return fetchResult{}, err
 	}
 	defer out.Close()
 
-	data, size, err := i.provider.Fetch(c.Args().Get(0), c.Args().Get(1))
+	data, size, err := i.provider.Fetch(channel, arch, filename)
 	if err != nil {
 		return fetchResult{}, err
 	}
@@ -86,18 +118,13 @@ func fetch(c *cli.Context, i imageConfig) (fetchResult, error) {
 		return fetchResult{}, err
 	}
 
-	err = i.provider.Validate(out, c.Args().Get(0), c.Args().Get(1))
+	err = i.provider.Validate(out, channel, arch, filename)
 	if err != nil {
 		return fetchResult{}, err
 	}
 
 	return fetchResult{
-		Path: filename,
+		Path: output_file,
 		Size: size,
 	}, nil
-}
-
-// buildFilename constructs a filename from an image channel and architecture.
-func buildFilename(channel string, arch string) string {
-	return fmt.Sprintf("flatcar_%s_%s.bin.bz2", channel, arch)
 }

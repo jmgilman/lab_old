@@ -211,7 +211,6 @@ func TestNewSecretProviderConfig(t *testing.T) {
 
 	ctx := cli.NewContext(&cli.App{}, set, nil)
 	_, err := NewSecretProviderConfig(ctx)
-	fmt.Println("Error: ", err)
 	is.Equal(err.Error(), "must supply both access and secret keys")
 
 	// With all flags

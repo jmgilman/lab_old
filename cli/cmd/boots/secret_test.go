@@ -14,8 +14,8 @@ func TestDelete(t *testing.T) {
 	is := is.New(t)
 	expected := "test"
 
-	flagSet := flag.NewFlagSet("test", 0)
-	flagSet.String(flag_backend, "mock", "test")
+	flagSet := flag.NewFlagSet("", 0)
+	flagSet.String(flag_secret_backend, "mock", "")
 	_ = flagSet.Parse([]string{expected})
 	ctx := cli.NewContext(&cli.App{}, flagSet, nil)
 
@@ -53,11 +53,10 @@ func TestGenerate(t *testing.T) {
 	expected_key := "key"
 	expected_value := "value"
 
-	flagSet := flag.NewFlagSet("test", 0)
-	flagSet.String(flag_backend, "mock", "test")
-	flagSet.Int("length", 12, "test")
-	flagSet.Int("numbers", 2, "test")
-	flagSet.Int("symbols", 3, "test")
+	flagSet := flag.NewFlagSet("", 0)
+	flagSet.Int(flag_secret_length, 12, "")
+	flagSet.Int(flag_secret_numbers, 2, "")
+	flagSet.Int(flag_secret_symbols, 3, "")
 	_ = flagSet.Parse([]string{expected_key})
 	ctx := cli.NewContext(&cli.App{}, flagSet, nil)
 
@@ -105,8 +104,8 @@ func TestGet(t *testing.T) {
 	expected_key := "key"
 	expected_value := "value"
 
-	flagSet := flag.NewFlagSet("test", 0)
-	flagSet.String(flag_backend, "mock", "test")
+	flagSet := flag.NewFlagSet("", 0)
+	flagSet.String(flag_secret_backend, "mock", "")
 	_ = flagSet.Parse([]string{expected_key})
 	ctx := cli.NewContext(&cli.App{}, flagSet, nil)
 
@@ -145,8 +144,8 @@ func TestSet(t *testing.T) {
 	expected_key := "test"
 	expected_value := "test"
 
-	flagSet := flag.NewFlagSet("test", 0)
-	flagSet.String(flag_backend, "mock", "test")
+	flagSet := flag.NewFlagSet("", 0)
+	flagSet.String(flag_secret_backend, "mock", "")
 	_ = flagSet.Parse([]string{expected_key, expected_value})
 	ctx := cli.NewContext(&cli.App{}, flagSet, nil)
 
